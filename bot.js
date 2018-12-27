@@ -88,7 +88,7 @@ function DisplayPlayers(channel) {
 
     
       if(emb != null)
-           message.channel.sendEmbed(emb);
+           channel.sendEmbed(emb);
 
 }
 

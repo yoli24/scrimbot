@@ -87,7 +87,7 @@ function DisplayPlayers(channel) {
     }
 
     
-    channel.send(emb);
+    channel.sendEmb(emb);
 }
 
 bot.login(process.env.BOT_TOKEN);

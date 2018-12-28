@@ -43,7 +43,13 @@ bot.on('message', (message) => {
                 channels.push(message.channel.id);
                 console.log(channels);
                 break;
-
+            case prefix + "message":
+                var text = message.content.substring(cmd.length);
+                var emb = new Discord.RichEmbed()
+                .addField('מה הולך חברים' ,text)
+                .setColor('08BDFF')
+                message.channel.sendEmbed(emb);
+            break;
             case prefix + "stop":
                 if (!channels.includes(message.channel.id)) {
                     message.channel.send(message.author + " Channel is not running.");

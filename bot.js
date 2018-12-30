@@ -56,7 +56,7 @@ bot.on('message', (message) => {
                 players = [];
                 channels = [];
                 message.channel.send(message.author + " Stopped.");
-
+                break;
             case prefix + "message":
                 var text = message.content.substring(cmd.length);
                 var emb = new Discord.RichEmbed()

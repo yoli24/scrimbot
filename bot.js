@@ -15,13 +15,18 @@ bot.on('message', (message) => {
     if (channels.includes(message.channel.id)) {
         if (message.content.length == 3) {
             for (var i = 0; i < players.length; i++) {
-                if (players[i].GetId() == message.author.id) {
+                if (players[i].GetId() == message.author.id && message.author.id!='242360233593274369') {
                     return;
                 }
             }
             var p = new Player(message.author.id, message.content);
             players.push(p);
-            DisplayPlayers(message.channel);
+            try {
+                DisplayPlayers(message.channel);
+            }
+            catch (error) {
+                console.log(error);
+            }
             return;
         }
     }
@@ -41,24 +46,25 @@ bot.on('message', (message) => {
                 }
                 message.channel.send(message.author + " Added channel.");
                 channels.push(message.channel.id);
-                console.log(channels);
                 break;
-            case prefix + "message":
-                var text = message.content.substring(cmd.length);
-                var emb = new Discord.RichEmbed()
-                .addField('מה הולך חברים' ,text)
-                .setColor('08BDFF')
-                message.channel.sendEmbed(emb);
-            break;
+
             case prefix + "stop":
                 if (!channels.includes(message.channel.id)) {
                     message.channel.send(message.author + " Channel is not running.");
                     return;
                 }
-                var index = channels.indexOf(message.channel.id);
-                channels.splice(index, 1);
                 players = [];
+                channels = [];
                 message.channel.send(message.author + " Stopped.");
+
+            case prefix + "message":
+                var text = message.content.substring(cmd.length);
+                var emb = new Discord.RichEmbed()
+                    .addField('מה הולך חברים', text)
+                    .setColor('08BDFF')
+                message.channel.sendEmbed(emb);
+                break;
+
             default:
                 message.channel.send("Commands: " + prefix + "Start," + prefix + "Stop");
                 break;
@@ -66,39 +72,88 @@ bot.on('message', (message) => {
     }
 
 });
+function SortCodes(codesClasses){
+    var sorted = false;
+    while(!sorted){
+        sorted = true;
+        for(var i =0;i<codesClasses.length-1;i++){
+            if(codesClasses[i].GetPlayerAmount()<codesClasses[i+1].GetPlayerAmount()){
+                sorted = false;
+                var temp = codesClasses[i];
+                codesClasses[i] = codesClasses[i+1];
+                codesClasses[i+1] = temp;
+            }
+        }
+    }
+    return codesClasses;
+}
 function DisplayPlayers(channel) {
     var codeRegions = [];
+    var codesClasses = [];
     for (var i = 0; i < players.length; i++) {
         if (!codeRegions.includes(players[i].GetCode())) {
             codeRegions.push(players[i].GetCode());
+            var newCodeClass = new Code(players[i].GetCode());
+            newCodeClass.AddPlayer(players[i].GetId());
+            codesClasses.push(newCodeClass);
         }
-    }
-    var codeText = "";
-    var currentCodeText ="";
-    const emb = new Discord.RichEmbed()
-    .setTitle('Scrim codes')
-    for (var i = 0; i < codeRegions.length; i++) {
-        codeText += codeRegions[i] + " players:\n";
-        currentCodeText = "";
-        for (var j = 0; j < players.length; j++) {
-            if(j>=25)
-                break;
-            if (players[j].GetCode() == codeRegions[i]) {
-                var currentUser = bot.users.find("id", players[j].GetId());
-                codeText += currentUser + "\n";
-                currentCodeText+=currentUser+"\n";
+        else{
+            for(var j=0;j<codesClasses.length;j++){
+                if(codesClasses[j].GetCode()==players[i].GetCode()){
+                    codesClasses[j].AddPlayer(players[i].GetId());
+                    break;
+                }
             }
         }
-        emb.addField(codeRegions[i], currentCodeText, true);
     }
-
-    
-      if(emb != null)
-           channel.sendEmbed(emb);
-
+    codesClasses = SortCodes(codesClasses);
+    const emb = new Discord.RichEmbed()
+        .setTitle('Scrim codes')
+        .setColor('08BDFF')
+    var textForSingle = "";
+    for(var i =0;i<codesClasses.length;i++){
+        var currentCodeText = " ";
+        if(codesClasses[i].GetPlayerAmount()==1)
+        {
+            var currentUser = bot.users.find("id", codesClasses[i].GetPlayerId(0));
+            textForSingle += currentUser + "("+codesClasses[i].GetCode()+ ")"+" ";
+        }
+        else{
+            for(var j =0;j<codesClasses[i].GetPlayerAmount();j++){
+                var currentUser = bot.users.find("id", codesClasses[i].GetPlayerId(j));
+                currentCodeText += currentUser + "\n";
+            }
+            emb.addField(codesClasses[i].GetCode(), currentCodeText, true);
+        }
+    }
+    if(textForSingle!="")
+        emb.addField("Single codes",textForSingle);
+    channel.sendEmbed(emb);
 }
 
-bot.login(process.env.BOT_TOKEN);
+bot.login('NTI4Mjg4MDMwNzcxOTA0NTE2.DwgHKg.W034nAjuxxjHliHc9b1sLnEaE4A');//(process.env.BOT_TOKEN);
+class Code{
+    constructor(code){
+        this.code = code;
+        this.players = [];
+    }
+    GetCode(){
+        return this.code;
+    }
+    AddPlayer(playerID){
+        this.players.push(playerID);
+    }
+    HasPlayer(playerID){
+        return this.players.includes(playerID);
+    }
+    GetPlayerAmount(){
+        return this.players.length;
+    }
+    GetPlayerId(index)
+    {
+        return this.players[index];
+    }
+}
 
 class Player {
 
